@@ -1,5 +1,5 @@
 const aulas=[
-  {t:"Aula 1",s:"Configurando seu ambiente e a corretora",v:"AULA01_CONFIGURACAO_AMBIENTE.mp4",m:"1:50",d:"Antes de analisar qualquer gráfico, deixe tudo pronto: conta, plataforma e conta demo. É aqui que você começa do jeito certo.",p:["Conhecendo a interface da plataforma de operações","Entendendo a estrutura do gráfico e os candles","Como acessar e adicionar indicadores ao gráfico","Configurando o indicador Bollinger Bands","Adicionando e personalizando a média móvel EMA","Ajustando cores e aparência dos indicadores","Organizando o gráfico para deixar seu ambiente de operação preparado"]},
+  {t:"Aula 1",s:"Configurando seu ambiente e a corretora",v:"HB7rFDwPVa8",yt:true,m:"1:50",d:"Antes de analisar qualquer gráfico, deixe tudo pronto: conta, plataforma e conta demo. É aqui que você começa do jeito certo.",p:["Conhecendo a interface da plataforma de operações","Entendendo a estrutura do gráfico e os candles","Como acessar e adicionar indicadores ao gráfico","Configurando o indicador Bollinger Bands","Adicionando e personalizando a média móvel EMA","Ajustando cores e aparência dos indicadores","Organizando o gráfico para deixar seu ambiente de operação preparado"]},
   {t:"Aula 2",s:"Lendo o gráfico",m:"20 min",d:"O preço conta uma história. Aprenda a língua do mercado para parar de operar no escuro.",p:["Candles: o que cada vela mostra","Tendência de alta, de baixa e lateral","Suporte e resistência: onde o preço costuma reagir","Como montar uma checklist antes de entrar"]},
   {t:"Aula 3",s:"Gestão de risco",m:"18 min",d:"A aula que separa quem dura de quem some. Sem controle de risco, nenhuma estratégia se sustenta.",p:["Quanto arriscar por operação (1% a 2% da banca)","Stop diário: a hora de fechar a plataforma","Como evitar dobrar a aposta depois de uma perda","Diário de operações: aprender com os seus erros"]}
 ];
@@ -26,8 +26,10 @@ function aula(i){
   const videoEl=document.querySelector(".video");
   if(videoEl&&videoEl.dataset.lesson!==String(i)){
     videoEl.dataset.lesson=i;
-    if(a.v)buildPlayer(videoEl,a.v,"a"+(i+1));
-    else{videoEl.className="video";videoEl.innerHTML='<div class="play"></div>'}
+    if(a.v){
+      if(a.yt)buildYTPlayer(videoEl,a.v,"a"+(i+1));
+      else buildPlayer(videoEl,a.v,"a"+(i+1));
+    }else{videoEl.className="video";videoEl.innerHTML='<div class="play"></div>'}
   }
   $("ad").innerHTML=`<p>${a.d}</p><h3>O que você vai ver</h3><ul>${a.p.map(x=>`<li>${x}</li>`).join("")}</ul>${BROKER}`;
   
@@ -48,6 +50,62 @@ function aula(i){
   $("side").innerHTML=aulas.map((x,j)=>`<a href="#aula${j+1}" class="${j===i?"on ":""}${done.has(j)?"d":""}"><span>${done.has(j)?"✓":j+1}</span>${x.t}</a>`).join("");
 }
 const fmt=s=>{if(!isFinite(s))return"0:00";const m=Math.floor(s/60),x=Math.floor(s%60);return m+":"+(x<10?"0":"")+x};
+function buildYTPlayer(box,videoId,key){
+  box.className="video has-video";
+  box.innerHTML=`<div class="vp yt-player" tabindex="0" aria-label="Player de vídeo">
+    <div id="yt-${key}"></div>
+    <button class="vp-big" type="button" aria-label="Reproduzir"><span><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></span></span></button>
+  </div>`;
+  
+  const vp=box.querySelector(".vp");
+  const btn=box.querySelector(".vp-big");
+  
+  // Carregar API do YouTube
+  if(!window.YT){
+    const tag=document.createElement("script");
+    tag.src="https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  }
+  
+  // Aguardar API carregar
+  const initPlayer=()=>{
+    const player=new YT.Player("yt-"+key,{
+      videoId:videoId,
+      playerVars:{
+        rel:0,
+        modestbranding:1,
+        controls:1,
+        fs:1,
+        playsinline:1
+      },
+      events:{
+        onReady:()=>{
+          btn.style.display="none";
+          vp.classList.add("yt-ready");
+        },
+        onStateChange:(e)=>{
+          if(e.data===YT.PlayerState.PLAYING){
+            vp.classList.add("playing");
+            btn.style.display="none";
+          }else{
+            vp.classList.remove("playing");
+          }
+        }
+      }
+    });
+    
+    btn.onclick=()=>{
+      player.playVideo();
+      btn.style.display="none";
+    };
+  };
+  
+  if(window.YT&&window.YT.Player){
+    initPlayer();
+  }else{
+    window.onYouTubeIframeAPIReady=initPlayer;
+  }
+}
 function buildPlayer(box,src,key){
   const pk="bask-pos-"+key;
   box.className="video has-video";
