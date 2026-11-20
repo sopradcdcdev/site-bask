@@ -41,7 +41,9 @@ function aula(i){
     if(!wasComplete&&done.size===aulas.length){
       confetti();
       showCongrats();
+      trackCursoCompleto();
     }
+    if(done.has(i))trackConcluiu(i);
     aula(i);
   };
   const pv=$("pv"),nx=$("nx");
@@ -253,7 +255,7 @@ function rota(){
   const m=h.match(/^aula(\d+)$/);
   let v="inicio",tab="inicio";
   if(h==="aulas"){v="aulas";tab="aulas";lista()}
-  else if(m&&aulas[m[1]-1]){v="aula";tab="aulas";aula(m[1]-1)}
+  else if(m&&aulas[m[1]-1]){v="aula";tab="aulas";aula(m[1]-1);trackAula(m[1]-1)}
   document.querySelectorAll(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));
   document.querySelectorAll("[data-r]").forEach(e=>e.classList.toggle("on",e.dataset.r===tab));
   if(v!=="aula")document.querySelectorAll("video").forEach(x=>x.pause());
@@ -282,3 +284,17 @@ function rota(){
 })();
 $("abImg").src=document.querySelector(".mark").src;
 addEventListener("hashchange",rota);rota();
+
+// Analytics: rastrear navegação entre aulas
+function trackAula(i){
+  if(typeof gtag==="undefined")return;
+  gtag("event","view_aula",{aula:i+1,titulo:aulas[i].t});
+}
+function trackConcluiu(i){
+  if(typeof gtag==="undefined")return;
+  gtag("event","concluiu_aula",{aula:i+1,titulo:aulas[i].t});
+}
+function trackCursoCompleto(){
+  if(typeof gtag==="undefined")return;
+  gtag("event","curso_completo");
+}
